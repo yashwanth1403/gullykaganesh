@@ -12,6 +12,13 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored MapLibre worker chunks, copied in by
+    // scripts/copy-maplibre-worker.mjs — not our source.
+    "public/maplibre/**",
+    // OpenNext / wrangler build output.
+    ".open-next/**",
+    ".wrangler/**",
+    "cloudflare-env.d.ts",
   ]),
 ]);
 

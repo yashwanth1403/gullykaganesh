@@ -1,0 +1,2 @@
+ALTER TABLE "photos" ADD COLUMN "is_pin" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "photos_pin_per_pandal" ON "photos" USING btree ("pandal_id") WHERE "photos"."is_pin";

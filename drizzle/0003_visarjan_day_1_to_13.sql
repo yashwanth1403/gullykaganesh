@@ -1,0 +1,2 @@
+ALTER TABLE "pandals" DROP CONSTRAINT "pandals_visarjan_day_check";--> statement-breakpoint
+ALTER TABLE "pandals" ADD CONSTRAINT "pandals_visarjan_day_check" CHECK ("pandals"."visarjan_day" between 1 and 13);
