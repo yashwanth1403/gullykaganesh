@@ -511,8 +511,8 @@ export default function AddPandalForm({ initial }: { initial?: EditInitial }) {
         <SectionTitle icon="pen">About the mandapam</SectionTitle>
         {/* The name *is* the organisation — the committee, team, or colony
             that puts it up is what everyone calls the mandapam. */}
-        <Field label="Name" hint="committee or team">
-          <input name="name" required maxLength={80} className={field} placeholder="Team Adidev" autoComplete="organization" defaultValue={initial?.name} />
+        <Field label="Name" hint="team name or what the Ganesh is known as">
+          <input name="name" required maxLength={80} className={field} placeholder="Team Adidev / Bahubali Ganesh" autoComplete="organization" defaultValue={initial?.name} />
         </Field>
         {/* The glyph in the field says what to paste; a URL is fine too. */}
         <Field label="Instagram" hint="optional">
