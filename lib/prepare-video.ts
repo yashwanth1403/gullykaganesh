@@ -7,7 +7,8 @@ import { MAX_VIDEO_BYTES, MAX_VIDEO_SECONDS, VIDEO_CONTENT_TYPES, type VideoCont
  * recorded, and the work is in never *downloading* it until someone asks.
  */
 export type PreparedVideo = {
-  blob: File;
+  /** A copy of the clip held in memory — not the picker's File, see below. */
+  blob: Blob;
   contentType: VideoContentType;
   poster: Blob;
   width: number;
@@ -64,8 +65,15 @@ export async function prepareVideo(file: File): Promise<PreparedVideo> {
     const poster = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", 0.82));
     if (!poster) throw new Error("Could not encode poster");
 
+    // Copy the bytes now. The File from a phone's gallery picker is a handle
+    // to a temp export (iOS) or a content URI (Android) that the browser may
+    // release once the input is reset or the picker closes — reading it at
+    // submit time, minutes later, then fails with a bare "Failed to fetch".
+    // Photos never hit this because the resized JPEG is already a Blob.
+    const blob = new Blob([await file.arrayBuffer()], { type: file.type });
+
     return {
-      blob: file,
+      blob,
       contentType: file.type as VideoContentType,
       poster,
       width,

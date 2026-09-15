@@ -12,6 +12,9 @@ import { prepareVideo, VideoRejected, type PreparedVideo } from "@/lib/prepare-v
 import type { Place } from "@/lib/geocode";
 import { MAX_PHOTOS, MAX_VIDEOS, MAX_VIDEO_SECONDS, PHOTO_CONTENT_TYPE } from "@/lib/validation";
 
+/** A PUT to R2 that didn't land, with which object and why — the generic message hid this. */
+class UploadFailed extends Error {}
+
 /** Something picked in this session: a resized photo, or a video with its poster. */
 type LocalMedia = ({ kind: "photo" } & ResizedPhoto) | ({ kind: "video" } & PreparedVideo);
 
@@ -301,8 +304,14 @@ export default function AddPandalForm({ initial }: { initial?: EditInitial }) {
         );
         const slots = await requestUploadUrls(types);
         const put = async (url: string, type: string, body: Blob) => {
-          const res = await fetch(url, { method: "PUT", headers: { "Content-Type": type }, body });
-          if (!res.ok) throw new Error("upload");
+          const res = await fetch(url, { method: "PUT", headers: { "Content-Type": type }, body }).catch(() => {
+            throw new UploadFailed(`${type.startsWith("video/") ? "The video" : "A photo"} couldn't be sent. Check your signal and try again.`);
+          });
+          if (!res.ok) {
+            throw new UploadFailed(
+              `${type.startsWith("video/") ? "The video" : "A photo"} was refused by storage (HTTP ${res.status}). Try again.`,
+            );
+          }
         };
         let n = 0;
         uploaded = await Promise.all(
@@ -345,8 +354,11 @@ export default function AddPandalForm({ initial }: { initial?: EditInitial }) {
         : await createPandal(fields);
       if (!result.ok) return setStage({ kind: "error", message: result.error });
       router.push(`/?p=${result.id}`);
-    } catch {
-      setStage({ kind: "error", message: "Upload didn't go through. Check your signal and try again." });
+    } catch (err) {
+      setStage({
+        kind: "error",
+        message: err instanceof UploadFailed ? err.message : "Upload didn't go through. Check your signal and try again.",
+      });
     }
   }
 
