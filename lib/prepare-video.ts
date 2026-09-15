@@ -21,8 +21,18 @@ export type PreparedVideo = {
 export class VideoRejected extends Error {}
 
 const POSTER_MAX_EDGE = 1600;
-/** Seek a little in: frame zero of a phone clip is often black or blurred. */
-const POSTER_AT_S = 0.4;
+/** Mean luminance (0–255) below which a frame is "black" and we try the next. */
+const BLACK_BELOW = 10;
+
+/**
+ * Where to try grabbing the poster. Frame zero of a phone clip is often
+ * black or blurred, and a fade-in can make the first half-second black too,
+ * so there are fallbacks further into the clip.
+ */
+function posterTimes(duration: number): number[] {
+  const last = Math.max(0, duration - 0.1);
+  return [...new Set([0.4, 1.0, duration * 0.25, duration * 0.5].map((t) => Math.min(t, last)))];
+}
 
 export async function prepareVideo(file: File): Promise<PreparedVideo> {
   if (!(VIDEO_CONTENT_TYPES as readonly string[]).includes(file.type)) {
@@ -36,7 +46,7 @@ export async function prepareVideo(file: File): Promise<PreparedVideo> {
   const video = document.createElement("video");
   video.muted = true;
   video.playsInline = true;
-  video.preload = "metadata";
+  video.preload = "auto";
   video.src = src;
 
   try {
@@ -47,12 +57,6 @@ export async function prepareVideo(file: File): Promise<PreparedVideo> {
       throw new VideoRejected(`Keep videos under ${MAX_VIDEO_SECONDS} seconds — this one is ${durationS}s.`);
     }
 
-    // Frame grab: seek, wait for the frame, draw it. `seeked` alone can fire
-    // before the frame is painted on some browsers, so wait a tick as well.
-    video.currentTime = Math.min(POSTER_AT_S, video.duration / 2);
-    await once(video, "seeked");
-    await new Promise(requestAnimationFrame);
-
     const scale = Math.min(1, POSTER_MAX_EDGE / Math.max(video.videoWidth, video.videoHeight));
     const width = Math.round(video.videoWidth * scale);
     const height = Math.round(video.videoHeight * scale);
@@ -61,7 +65,20 @@ export async function prepareVideo(file: File): Promise<PreparedVideo> {
     canvas.height = height;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Canvas unavailable");
-    ctx.drawImage(video, 0, 0, width, height);
+
+    // Frame grab. Phones don't decode a frame on seek alone — `seeked` fires
+    // with nothing to draw, and drawImage gives a black canvas (iOS always,
+    // Android often). So: seek, start muted playback (allowed without a
+    // gesture), wait until a frame has actually been *presented*, pause,
+    // draw. Then check it isn't black anyway and move later into the clip
+    // if it is.
+    // A genuinely dark clip (night, unlit lane) keeps its last attempt.
+    for (const t of posterTimes(video.duration)) {
+      await presentFrameAt(video, t);
+      ctx.drawImage(video, 0, 0, width, height);
+      if (meanLuminance(ctx, width, height) >= BLACK_BELOW) break;
+    }
+
     const poster = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", 0.82));
     if (!poster) throw new Error("Could not encode poster");
 
@@ -87,6 +104,37 @@ export async function prepareVideo(file: File): Promise<PreparedVideo> {
     video.load();
     URL.revokeObjectURL(src);
   }
+}
+
+/** Seek to `t` and return once the browser has put that frame on screen. */
+async function presentFrameAt(video: HTMLVideoElement, t: number): Promise<void> {
+  video.pause();
+  video.currentTime = t;
+  await once(video, "seeked");
+  // requestVideoFrameCallback fires when a frame is composited — the one
+  // signal that means drawImage will see pixels. Fall back to `timeupdate`
+  // where it isn't implemented (Firefox). Either way, cap the wait: a stalled
+  // decoder should degrade to a black poster, not hang the form.
+  const presented = new Promise<void>((resolve) => {
+    if (typeof video.requestVideoFrameCallback === "function") video.requestVideoFrameCallback(() => resolve());
+    else video.addEventListener("timeupdate", () => resolve(), { once: true });
+  });
+  await video.play().catch(() => {});
+  await Promise.race([presented, new Promise<void>((r) => setTimeout(r, 1500))]);
+  video.pause();
+}
+
+/** Average brightness of the canvas, sampled on a coarse grid. */
+function meanLuminance(ctx: CanvasRenderingContext2D, width: number, height: number): number {
+  const { data } = ctx.getImageData(0, 0, width, height);
+  let sum = 0;
+  let n = 0;
+  const step = Math.max(4, Math.floor(Math.sqrt((width * height) / 2000))) * 4;
+  for (let i = 0; i < data.length; i += step) {
+    sum += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+    n++;
+  }
+  return n ? sum / n : 0;
 }
 
 function once(el: HTMLMediaElement, event: string): Promise<void> {
