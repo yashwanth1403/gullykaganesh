@@ -460,6 +460,26 @@ export default function AddPandalForm({ initial }: { initial?: EditInitial }) {
               </span>
             </div>
           ))}
+          {/* Most submissions stop at one photo. An empty slot beside it says
+              there is room for more without another paragraph of copy. */}
+          {kept + photos.length > 0 && kept + photos.length + pending < MAX_PHOTOS && (
+            <label className="flex aspect-[4/5] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-line text-ink-dim transition-[background-color,border-color] duration-150 ease-out hover:border-turmeric hover:bg-paper-warm focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-turmeric active:scale-[0.98]">
+              <span className="grid h-8 w-8 place-items-center rounded-full bg-turmeric/18 text-ink">
+                <Icon name="plus" size={15} strokeWidth={2.4} />
+              </span>
+              <span className="numeric text-[10px] uppercase tracking-[0.07em]">Add another</span>
+              <input
+                type="file"
+                accept="image/*,video/*"
+                multiple
+                className="sr-only"
+                onChange={(e) => {
+                  pickPhotos(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          )}
         </div>
         {kept + photos.length < MAX_PHOTOS && (
           <div className={`grid gap-2 ${kept + photos.length === 0 ? "mt-3 grid-cols-2" : "mt-2 grid-cols-2"}`}>
