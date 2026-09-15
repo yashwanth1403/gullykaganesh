@@ -25,7 +25,7 @@ const jet = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://gullykaganesh.live"),
+  metadataBase: new URL("https://gullykaganesh.in"),
   title: "GullyKaGanesh — every Ganesh in every gully of Hyderabad",
   description:
     "Find the Ganesh idols near you. A map of Hyderabad's mandapams, added by the people who walk past them.",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     title: "GullyKaGanesh",
     description:
       "Every Ganesh in every gully of Hyderabad. Find the ones near you.",
-    url: "https://gullykaganesh.live",
+    url: "https://gullykaganesh.in",
     siteName: "GullyKaGanesh",
     locale: "en_IN",
     type: "website",

@@ -2,7 +2,7 @@
  * Warm Cloudflare's edge cache for the Protomaps archive by fetching every
  * tile's byte range over the city at the zooms people actually use.
  *
- *   node scripts/prewarm-tiles.mjs https://tiles.gullykaganesh.live/tiles/hyderabad-20260913.pmtiles
+ *   node scripts/prewarm-tiles.mjs https://tiles.gullykaganesh.in/tiles/hyderabad-20260913.pmtiles
  *
  * Talks to the archive directly (no browser): reads the header and
  * directories, then issues one ranged GET per tile through the public URL so

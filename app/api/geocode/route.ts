@@ -76,7 +76,7 @@ async function lookupNominatim(lat: number, lng: number): Promise<Place> {
     "accept-language": "en",
   }).toString();
   const res = await fetch(url, {
-    headers: { "User-Agent": "GullyKaGanesh/1.0 (https://gullykaganesh.live)" },
+    headers: { "User-Agent": "GullyKaGanesh/1.0 (https://gullykaganesh.in)" },
     signal: AbortSignal.timeout(5000),
   });
   if (!res.ok) throw new Error(`nominatim http ${res.status}`);
