@@ -43,8 +43,8 @@ async function removePhotoRows(where: ReturnType<typeof eq>) {
     .update(photos)
     .set({ status: "removed" })
     .where(where)
-    .returning({ r2Key: photos.r2Key });
-  return rows.map((r) => r.r2Key);
+    .returning({ r2Key: photos.r2Key, posterKey: photos.posterKey });
+  return rows.flatMap((r) => (r.posterKey ? [r.r2Key, r.posterKey] : [r.r2Key]));
 }
 
 export async function setPandalStatus(rawId: unknown, rawStatus: unknown) {

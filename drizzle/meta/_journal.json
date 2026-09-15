@@ -57,6 +57,13 @@
       "when": 1789372513306,
       "tag": "0007_photo_pin",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789455879172,
+      "tag": "0008_media_video",
+      "breakpoints": true
     }
   ]
 }

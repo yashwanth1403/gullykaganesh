@@ -7,7 +7,7 @@ import { db } from "@/db";
 import { pandals, photos } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { canEdit } from "@/lib/permissions";
-import { deletePhotoObject, verifyUploadedPhoto } from "@/lib/r2-server";
+import { deletePhotoObject, verifyOwnUploads } from "@/lib/r2-server";
 import { MAX_PHOTOS, pandalInput } from "@/lib/validation";
 
 /**
@@ -48,13 +48,8 @@ export async function updatePandal(raw: unknown): Promise<UpdateResult> {
   if (!pandal || pandal.status === "removed") return { ok: false, error: "That mandapam is gone" };
   if (!canEdit(user, pandal)) return { ok: false, error: "forbidden" };
 
-  const prefix = `pandals/${user.id}/`;
-  for (const p of input.photos) {
-    if (!p.key.startsWith(prefix)) return { ok: false, error: "Bad photo reference" };
-    if (!(await verifyUploadedPhoto(p.key))) {
-      return { ok: false, error: "A photo didn't finish uploading. Try again." };
-    }
-  }
+  const bad = await verifyOwnUploads(user.id, input.photos);
+  if (bad) return { ok: false, error: bad };
 
   let purge: string[] = [];
   try {
@@ -90,7 +85,7 @@ export async function updatePandal(raw: unknown): Promise<UpdateResult> {
                   eq(photos.status, "live"),
                 ),
               )
-              .returning({ r2Key: photos.r2Key });
+              .returning({ r2Key: photos.r2Key, posterKey: photos.posterKey });
 
       // Clear before setting: the partial unique index allows one pin per
       // pandal, and the old one may not be among the removed photos.
@@ -115,6 +110,9 @@ export async function updatePandal(raw: unknown): Promise<UpdateResult> {
           input.photos.map((p, i) => ({
             pandalId: input.id,
             r2Key: p.key,
+            kind: p.kind,
+            posterKey: p.posterKey ?? null,
+            durationS: p.durationS ?? null,
             width: p.width,
             height: p.height,
             uploadedBy: user.id,
@@ -129,7 +127,7 @@ export async function updatePandal(raw: unknown): Promise<UpdateResult> {
         .where(and(eq(photos.pandalId, input.id), eq(photos.status, "live")));
       if (live === 0 && !pandal.landmark) throw new Error("no-photos");
 
-      return removed.map((r) => r.r2Key);
+      return removed.flatMap((r) => (r.posterKey ? [r.r2Key, r.posterKey] : [r.r2Key]));
     });
   } catch (err) {
     if (err instanceof Error && err.message === "no-photos") {
@@ -209,8 +207,8 @@ export async function deletePandal(pandalId: string): Promise<DeleteResult> {
       .update(photos)
       .set({ status: "removed" })
       .where(and(eq(photos.pandalId, pandalId), inArray(photos.status, ["live", "hidden"])))
-      .returning({ r2Key: photos.r2Key });
-    return rows.map((r) => r.r2Key);
+      .returning({ r2Key: photos.r2Key, posterKey: photos.posterKey });
+    return rows.flatMap((r) => (r.posterKey ? [r.r2Key, r.posterKey] : [r.r2Key]));
   });
   await Promise.all(purge.map(deletePhotoObject));
 

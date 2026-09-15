@@ -5,23 +5,36 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { pandals, photos } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { presignPhotoUpload, verifyUploadedPhoto } from "@/lib/r2-server";
-import { MAX_PHOTOS, pandalInput } from "@/lib/validation";
+import { presignUpload, verifyOwnUploads, type UploadContentType } from "@/lib/r2-server";
+import { MAX_PHOTOS, PHOTO_CONTENT_TYPE, VIDEO_CONTENT_TYPES, pandalInput } from "@/lib/validation";
 
 export type UploadSlot = { key: string; url: string };
 
+const EXT: Record<UploadContentType, string> = {
+  "image/jpeg": "jpg",
+  "video/mp4": "mp4",
+  "video/quicktime": "mov",
+  "video/webm": "webm",
+};
+
 /**
- * One presigned PUT per photo the user picked. Keys are namespaced by user
- * so nothing a client sends can name someone else's object.
+ * One presigned PUT per object the user is about to send — a photo, a video,
+ * or a video's poster frame — each signed for exactly the type it will be.
+ * Keys are namespaced by user so nothing a client sends can name someone
+ * else's object.
  */
-export async function requestUploadUrls(count: number): Promise<UploadSlot[]> {
+export async function requestUploadUrls(types: string[]): Promise<UploadSlot[]> {
   const user = await getCurrentUser();
   if (!user) throw new Error("Sign in to add photos");
-  const n = Math.min(Math.max(Math.floor(count), 1), MAX_PHOTOS);
+  // A video and its poster are two objects, so twice the slot count.
+  const wanted = types.slice(0, MAX_PHOTOS * 2);
   return Promise.all(
-    Array.from({ length: n }, async () => {
-      const key = `pandals/${user.id}/${randomUUID()}.jpg`;
-      return { key, url: await presignPhotoUpload(key) };
+    wanted.map(async (t) => {
+      const type = ([PHOTO_CONTENT_TYPE, ...VIDEO_CONTENT_TYPES] as string[]).includes(t)
+        ? (t as UploadContentType)
+        : PHOTO_CONTENT_TYPE;
+      const key = `pandals/${user.id}/${randomUUID()}.${EXT[type]}`;
+      return { key, url: await presignUpload(key, type) };
     }),
   );
 }
@@ -38,14 +51,8 @@ export async function createPandal(raw: unknown): Promise<CreateResult> {
   }
   const input = parsed.data;
 
-  // Every key must be under this user's prefix and actually uploaded.
-  const prefix = `pandals/${user.id}/`;
-  for (const p of input.photos) {
-    if (!p.key.startsWith(prefix)) return { ok: false, error: "Bad photo reference" };
-    if (!(await verifyUploadedPhoto(p.key))) {
-      return { ok: false, error: "A photo didn't finish uploading. Try again." };
-    }
-  }
+  const bad = await verifyOwnUploads(user.id, input.photos);
+  if (bad) return { ok: false, error: bad };
 
   const id = await db.transaction(async (tx) => {
     const [row] = await tx
@@ -68,6 +75,9 @@ export async function createPandal(raw: unknown): Promise<CreateResult> {
       input.photos.map((p, i) => ({
         pandalId: row.id,
         r2Key: p.key,
+        kind: p.kind,
+        posterKey: p.posterKey ?? null,
+        durationS: p.durationS ?? null,
         width: p.width,
         height: p.height,
         uploadedBy: user.id,

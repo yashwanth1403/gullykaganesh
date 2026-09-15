@@ -51,8 +51,18 @@ export type Pandal = {
   photos: PandalPhoto[];
 };
 
-/** A photo as shipped to the client: the row id (for reports, edits, likes), its public URL, and hearts. */
-export type PandalPhoto = { id: string; url: string; likeCount: number };
+/**
+ * A photo or video as shipped to the client. `url` is always a still image —
+ * the photo itself, or a video's poster frame — so pins, thumbnails and
+ * cards never touch video bytes. `video` is present only for videos and is
+ * what the lightbox plays.
+ */
+export type PandalPhoto = {
+  id: string;
+  url: string;
+  likeCount: number;
+  video?: { url: string; durationS: number };
+};
 
 /** Ganesh Chaturthi 2026. Day 1 of the festival. */
 export const FESTIVAL_START = new Date("2026-09-14T00:00:00+05:30");

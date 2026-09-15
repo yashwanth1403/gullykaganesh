@@ -4,9 +4,17 @@ import { VISARJAN_DAYS } from "./pandals";
 /** Greater Hyderabad, with margin. Anything outside is a mis-drop, not a pandal. */
 export const HYDERABAD_BOUNDS = { west: 78.1, south: 17.1, east: 78.8, north: 17.7 };
 
+/** Media slots per pandal, photos and videos together. */
 export const MAX_PHOTOS = 6;
-/** The only type the client resizer emits and the only type R2 accepts. */
+/** Of those, how many may be videos. They are 100× the bytes of a photo. */
+export const MAX_VIDEOS = 2;
+/** The only type the client resizer emits, for photos and video posters alike. */
 export const PHOTO_CONTENT_TYPE = "image/jpeg";
+/** What phones actually produce. HEVC inside .mov plays on iOS/Android/Safari but not every desktop browser. */
+export const VIDEO_CONTENT_TYPES = ["video/mp4", "video/quicktime", "video/webm"] as const;
+export type VideoContentType = (typeof VIDEO_CONTENT_TYPES)[number];
+export const MAX_VIDEO_SECONDS = 30;
+export const MAX_VIDEO_BYTES = 60 * 1024 * 1024;
 
 const trimmed = (max: number) => z.string().trim().min(1).max(max);
 
@@ -67,10 +75,19 @@ export const pandalInput = z.object({
         key: z.string().min(1),
         width: z.number().int().min(1).max(10_000),
         height: z.number().int().min(1).max(10_000),
+        kind: z.enum(["photo", "video"]).default("photo"),
+        /** Required for a video: the JPEG frame every thumbnail and pin shows. */
+        posterKey: z.string().min(1).optional(),
+        durationS: z.number().int().min(1).max(MAX_VIDEO_SECONDS).optional(),
+      }).refine((m) => m.kind === "photo" || (m.posterKey && m.durationS), {
+        message: "A video needs its poster frame",
       }),
     )
     .min(1, "Add at least one photo")
-    .max(MAX_PHOTOS),
+    .max(MAX_PHOTOS)
+    .refine((list) => list.filter((m) => m.kind === "video").length <= MAX_VIDEOS, {
+      message: `Up to ${MAX_VIDEOS} videos per mandapam`,
+    }),
   /** Which of `photos` goes on the map pin. Omitted: the most-liked one does. */
   pinIndex: z.number().int().min(0).max(MAX_PHOTOS - 1).optional(),
 });

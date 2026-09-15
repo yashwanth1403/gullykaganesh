@@ -15,6 +15,26 @@ import type { Pandal, PandalPhoto, VisarjanDay } from "./pandals";
  * bytes — a bbox endpoint becomes worth it only past that. Immersed pandals
  * are filtered on the client, where the festival day is known.
  */
+/** Row → wire shape. A video's `url` is its poster; the file itself rides along in `video`. */
+export function toPandalPhoto(p: {
+  id: string;
+  r2Key: string;
+  likeCount: number;
+  kind: "photo" | "video";
+  posterKey: string | null;
+  durationS: number | null;
+}): PandalPhoto {
+  if (p.kind === "video" && p.posterKey) {
+    return {
+      id: p.id,
+      url: photoUrl(p.posterKey),
+      likeCount: p.likeCount,
+      video: { url: photoUrl(p.r2Key), durationS: p.durationS ?? 0 },
+    };
+  }
+  return { id: p.id, url: photoUrl(p.r2Key), likeCount: p.likeCount };
+}
+
 export async function getLivePandals(): Promise<Pandal[]> {
   const claimant = alias(profiles, "claimant");
   const rows = await db
@@ -50,7 +70,15 @@ export async function getLivePandals(): Promise<Pandal[]> {
   // Most-liked first so the cover picks itself; oldest breaks ties so a
   // pandal with no hearts yet keeps the order the uploader chose.
   const photoRows = await db
-    .select({ id: photos.id, pandalId: photos.pandalId, r2Key: photos.r2Key, likeCount: photos.likeCount })
+    .select({
+      id: photos.id,
+      pandalId: photos.pandalId,
+      r2Key: photos.r2Key,
+      likeCount: photos.likeCount,
+      kind: photos.kind,
+      posterKey: photos.posterKey,
+      durationS: photos.durationS,
+    })
     .from(photos)
     .where(
       and(
@@ -63,7 +91,7 @@ export async function getLivePandals(): Promise<Pandal[]> {
   const byPandal = new Map<string, PandalPhoto[]>();
   for (const p of photoRows) {
     const list = byPandal.get(p.pandalId) ?? [];
-    list.push({ id: p.id, url: photoUrl(p.r2Key), likeCount: p.likeCount });
+    list.push(toPandalPhoto(p));
     byPandal.set(p.pandalId, list);
   }
 
@@ -137,7 +165,15 @@ export async function getPandalForManage(id: string): Promise<ManagedPandal | nu
   if (!row) return null;
 
   const photoRows = await db
-    .select({ id: photos.id, r2Key: photos.r2Key, likeCount: photos.likeCount, isPin: photos.isPin })
+    .select({
+      id: photos.id,
+      r2Key: photos.r2Key,
+      likeCount: photos.likeCount,
+      isPin: photos.isPin,
+      kind: photos.kind,
+      posterKey: photos.posterKey,
+      durationS: photos.durationS,
+    })
     .from(photos)
     .where(and(eq(photos.pandalId, id), eq(photos.status, "live")))
     .orderBy(asc(photos.createdAt));
@@ -148,7 +184,7 @@ export async function getPandalForManage(id: string): Promise<ManagedPandal | nu
     lng: location.x,
     lat: location.y,
     visarjanDay: row.visarjanDay as VisarjanDay,
-    photos: photoRows.map((p) => ({ id: p.id, url: photoUrl(p.r2Key), likeCount: p.likeCount })),
+    photos: photoRows.map(toPandalPhoto),
     pinPhotoId: photoRows.find((p) => p.isPin)?.id ?? null,
   };
 }

@@ -123,6 +123,14 @@ export const pandals = pgTable(
   ],
 );
 
+/**
+ * Photos and short videos share one table (and one name, for history's
+ * sake): likes, reports, the pin choice and moderation all apply the same
+ * way to both. A video row also carries a poster JPEG, captured in the
+ * browser at upload time, which is what every thumbnail and pin shows.
+ */
+export const mediaKind = pgEnum("media_kind", ["photo", "video"]);
+
 export const photos = pgTable(
   "photos",
   {
@@ -132,6 +140,11 @@ export const photos = pgTable(
       .references(() => pandals.id, { onDelete: "cascade" }),
     /** Object key in the R2 bucket. The public URL is derived, not stored. */
     r2Key: text().notNull().unique(),
+    kind: mediaKind().notNull().default("photo"),
+    /** Video only: R2 key of the poster frame. Null for photos. */
+    posterKey: text(),
+    /** Video only: length in whole seconds, for the badge on the tile. */
+    durationS: smallint(),
     width: integer().notNull(),
     height: integer().notNull(),
     /** Hearts from viewers. Trigger-maintained. */
@@ -149,6 +162,7 @@ export const photos = pgTable(
   (t) => [
     index("photos_pandal_id_idx").on(t.pandalId),
     uniqueIndex("photos_pin_per_pandal").on(t.pandalId).where(sql`${t.isPin}`),
+    check("photos_video_has_poster", sql`${t.kind} <> 'video' or ${t.posterKey} is not null`),
   ],
 );
 

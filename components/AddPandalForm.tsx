@@ -8,8 +8,16 @@ import { createPandal, requestUploadUrls } from "@/app/add/actions";
 import { updatePandal } from "@/app/p/[id]/actions";
 import { VISARJAN_DAYS, visarjanDate, type PandalPhoto, type VisarjanDay } from "@/lib/pandals";
 import { resizeImage, type ResizedPhoto } from "@/lib/resize-image";
+import { prepareVideo, VideoRejected, type PreparedVideo } from "@/lib/prepare-video";
 import type { Place } from "@/lib/geocode";
-import { MAX_PHOTOS, PHOTO_CONTENT_TYPE } from "@/lib/validation";
+import { MAX_PHOTOS, MAX_VIDEOS, MAX_VIDEO_SECONDS, PHOTO_CONTENT_TYPE } from "@/lib/validation";
+
+/** Something picked in this session: a resized photo, or a video with its poster. */
+type LocalMedia = ({ kind: "photo" } & ResizedPhoto) | ({ kind: "video" } & PreparedVideo);
+
+function fmtDuration(s: number) {
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
 
 type Stage =
   | { kind: "idle" }
@@ -82,12 +90,14 @@ function PhotoInput({
   icon,
   label,
   primary,
+  accept = "image/*",
 }: {
   capture?: boolean;
   onPick: (files: FileList | null) => void;
   icon: "camera" | "image";
   label: string;
   primary?: boolean;
+  accept?: string;
 }) {
   return (
     <label
@@ -101,7 +111,7 @@ function PhotoInput({
       <span className="numeric text-[11px] uppercase tracking-[0.06em]">{label}</span>
       <input
         type="file"
-        accept="image/*"
+        accept={accept}
         multiple={!capture}
         capture={capture ? "environment" : undefined}
         className="sr-only"
@@ -145,6 +155,16 @@ function PinBadge() {
   );
 }
 
+/** Says "this one moves" on a tile that is showing a still. */
+function VideoBadge({ durationS }: { durationS: number }) {
+  return (
+    <span className="numeric pointer-events-none absolute top-1.5 left-1.5 flex items-center gap-0.5 rounded-full bg-ink/70 py-1 pr-2 pl-1.5 text-[9.5px] tracking-[0.04em] text-paper backdrop-blur">
+      <Icon name="play" size={9} strokeWidth={2.4} className="fill-current" />
+      {fmtDuration(durationS)}
+    </span>
+  );
+}
+
 const tile = "relative aspect-[4/5] overflow-hidden rounded-xl bg-paper-warm shadow-[var(--shadow-elevated)]";
 const tileButton =
   "block h-full w-full focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-turmeric disabled:cursor-default";
@@ -157,7 +177,7 @@ const tileActive = "ring-2 ring-turmeric ring-offset-2 ring-offset-paper";
  */
 export default function AddPandalForm({ initial }: { initial?: EditInitial }) {
   const router = useRouter();
-  const [photos, setPhotos] = useState<ResizedPhoto[]>([]);
+  const [photos, setPhotos] = useState<LocalMedia[]>([]);
   // Existing photos are never re-uploaded; removal is a set of ids, undoable
   // until Save so a mis-tap doesn't cost anyone a photo.
   const existing = initial?.photos ?? [];
@@ -215,13 +235,28 @@ export default function AddPandalForm({ initial }: { initial?: EditInitial }) {
     if (!files || files.length === 0) return;
     const room = MAX_PHOTOS - kept - photos.length;
     const picked = Array.from(files).slice(0, room);
+    // Videos are capped separately: they cost 100× the bytes of a photo.
+    const videosNow =
+      existing.filter((p) => p.video && !removed.has(p.id)).length + photos.filter((p) => p.kind === "video").length;
+    if (videosNow + picked.filter((f) => f.type.startsWith("video/")).length > MAX_VIDEOS) {
+      return setStage({ kind: "error", message: `Up to ${MAX_VIDEOS} videos per mandapam; the rest can be photos.` });
+    }
     setStage({ kind: "busy", label: "Preparing photos…", pending: picked.length });
     try {
-      const next = await Promise.all(picked.map(resizeImage));
+      const next = await Promise.all(
+        picked.map(async (f): Promise<LocalMedia> =>
+          f.type.startsWith("video/")
+            ? { kind: "video", ...(await prepareVideo(f)) }
+            : { kind: "photo", ...(await resizeImage(f)) },
+        ),
+      );
       setPhotos((cur) => [...cur, ...next]);
       setStage({ kind: "idle" });
-    } catch {
-      setStage({ kind: "error", message: "One of those files isn't a photo we can read." });
+    } catch (err) {
+      setStage({
+        kind: "error",
+        message: err instanceof VideoRejected ? err.message : "One of those files isn't a photo we can read.",
+      });
     }
   }
 
@@ -249,19 +284,37 @@ export default function AddPandalForm({ initial }: { initial?: EditInitial }) {
 
     const form = new FormData(e.currentTarget);
     try {
-      let uploaded: { key: string; width: number; height: number }[] = [];
+      type Uploaded = {
+        key: string;
+        width: number;
+        height: number;
+        kind: "photo" | "video";
+        posterKey?: string;
+        durationS?: number;
+      };
+      let uploaded: Uploaded[] = [];
       if (photos.length > 0) {
         setStage({ kind: "busy", label: "Uploading photos…", step: 1 });
-        const slots = await requestUploadUrls(photos.length);
+        // One slot per object: a photo is one, a video is two (file + poster).
+        const types = photos.flatMap((p) =>
+          p.kind === "video" ? [p.contentType, PHOTO_CONTENT_TYPE] : [PHOTO_CONTENT_TYPE],
+        );
+        const slots = await requestUploadUrls(types);
+        const put = async (url: string, type: string, body: Blob) => {
+          const res = await fetch(url, { method: "PUT", headers: { "Content-Type": type }, body });
+          if (!res.ok) throw new Error("upload");
+        };
+        let n = 0;
         uploaded = await Promise.all(
-          photos.map(async (p, i) => {
-            const res = await fetch(slots[i].url, {
-              method: "PUT",
-              headers: { "Content-Type": PHOTO_CONTENT_TYPE },
-              body: p.blob,
-            });
-            if (!res.ok) throw new Error("upload");
-            return { key: slots[i].key, width: p.width, height: p.height };
+          photos.map(async (p) => {
+            const slot = slots[n++];
+            if (p.kind === "video") {
+              const posterSlot = slots[n++];
+              await Promise.all([put(slot.url, p.contentType, p.blob), put(posterSlot.url, PHOTO_CONTENT_TYPE, p.poster)]);
+              return { key: slot.key, width: p.width, height: p.height, kind: "video" as const, posterKey: posterSlot.key, durationS: p.durationS };
+            }
+            await put(slot.url, PHOTO_CONTENT_TYPE, p.blob);
+            return { key: slot.key, width: p.width, height: p.height, kind: "photo" as const };
           }),
         );
       }
@@ -308,8 +361,8 @@ export default function AddPandalForm({ initial }: { initial?: EditInitial }) {
       <section>
         <SectionTitle icon="camera">Photos</SectionTitle>
         <p className="mt-1 text-[13px] leading-relaxed text-ink-dim">
-          The idol, the mandapam, the lane. Up to {MAX_PHOTOS}.
-          {pinnable.length > 1 && " Tap one to put it on the map pin."}
+          The idol, the mandapam, the lane. Up to {MAX_PHOTOS}, and up to {MAX_VIDEOS} of them short videos
+          (under {MAX_VIDEO_SECONDS}s).{pinnable.length > 1 && " Tap one to put it on the map pin."}
         </p>
         <div
           role="radiogroup"
@@ -337,6 +390,7 @@ export default function AddPandalForm({ initial }: { initial?: EditInitial }) {
                     className={`h-full w-full object-cover transition-opacity duration-200 ${gone ? "opacity-30" : ""}`}
                   />
                 </button>
+                {p.video && <VideoBadge durationS={p.video.durationS} />}
                 {onPin && <PinBadge />}
                 <button
                   type="button"
@@ -372,6 +426,7 @@ export default function AddPandalForm({ initial }: { initial?: EditInitial }) {
                   {/* eslint-disable-next-line @next/next/no-img-element -- local blob preview */}
                   <img src={p.previewUrl} alt="" className="h-full w-full object-cover" />
                 </button>
+                {p.kind === "video" && <VideoBadge durationS={p.durationS} />}
                 {onPin && <PinBadge />}
                 <button
                   type="button"
@@ -398,7 +453,7 @@ export default function AddPandalForm({ initial }: { initial?: EditInitial }) {
                 phone, and the same attribute hides the gallery, so each gets
                 its own button. Desktop ignores `capture` and both pick files. */}
             <PhotoInput capture onPick={pickPhotos} icon="camera" label="Take a photo" primary={kept + photos.length === 0} />
-            <PhotoInput onPick={pickPhotos} icon="image" label="Choose from gallery" />
+            <PhotoInput onPick={pickPhotos} icon="image" label="Choose from gallery" accept="image/*,video/*" />
           </div>
         )}
       </section>

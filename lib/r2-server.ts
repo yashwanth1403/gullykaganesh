@@ -1,7 +1,12 @@
 import "server-only";
 import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { PHOTO_CONTENT_TYPE } from "./validation";
+import {
+  MAX_VIDEO_BYTES,
+  PHOTO_CONTENT_TYPE,
+  VIDEO_CONTENT_TYPES,
+  type VideoContentType,
+} from "./validation";
 
 function env(name: string): string {
   const v = process.env[name];
@@ -22,39 +27,66 @@ function r2() {
   return client;
 }
 
-/** Largest upload we accept. The client resizes to well under this. */
+/** Largest photo we accept. The client resizes to well under this. */
 export const MAX_PHOTO_BYTES = 6 * 1024 * 1024;
 
+export type UploadContentType = typeof PHOTO_CONTENT_TYPE | VideoContentType;
+
 /**
- * A short-lived URL the browser can PUT one JPEG to. The key is ours, not
- * the client's, so a user can only ever write under their own prefix.
+ * A short-lived URL the browser can PUT one object to, of exactly the
+ * content type signed here — a different type is a signature mismatch and
+ * R2 refuses it. The key is ours, not the client's, so a user can only ever
+ * write under their own prefix.
  */
-export async function presignPhotoUpload(key: string): Promise<string> {
+export async function presignUpload(key: string, contentType: UploadContentType): Promise<string> {
   const cmd = new PutObjectCommand({
     Bucket: env("R2_BUCKET"),
     Key: key,
-    ContentType: PHOTO_CONTENT_TYPE,
+    ContentType: contentType,
   });
   return getSignedUrl(r2(), cmd, { expiresIn: 600 });
 }
 
 /**
- * Confirms an upload actually landed and is a JPEG of sane size before a
- * photo row points at it. A presigned URL cannot enforce a size cap, so
- * this is the check.
+ * Confirms an upload actually landed, is the kind of thing it claims to be,
+ * and is of sane size before a row points at it. A presigned URL cannot
+ * enforce a size cap, so this is the check.
  */
-export async function verifyUploadedPhoto(key: string): Promise<boolean> {
+export async function verifyUpload(key: string, kind: "photo" | "video"): Promise<boolean> {
   try {
     const head = await r2().send(
       new HeadObjectCommand({ Bucket: env("R2_BUCKET"), Key: key }),
     );
+    const size = head.ContentLength ?? Infinity;
+    if (kind === "photo") return head.ContentType === PHOTO_CONTENT_TYPE && size <= MAX_PHOTO_BYTES;
     return (
-      head.ContentType === PHOTO_CONTENT_TYPE &&
-      (head.ContentLength ?? Infinity) <= MAX_PHOTO_BYTES
+      (VIDEO_CONTENT_TYPES as readonly string[]).includes(head.ContentType ?? "") &&
+      size <= MAX_VIDEO_BYTES
     );
   } catch {
     return false;
   }
+}
+
+/**
+ * Every key must sit under this user's prefix and actually have been
+ * uploaded as what it claims to be — a video's poster included. Returns the
+ * message to show, or null when everything checks out.
+ */
+export async function verifyOwnUploads(
+  userId: string,
+  media: { key: string; kind: "photo" | "video"; posterKey?: string }[],
+): Promise<string | null> {
+  const prefix = `pandals/${userId}/`;
+  for (const m of media) {
+    const keys: [string, "photo" | "video"][] = [[m.key, m.kind]];
+    if (m.kind === "video" && m.posterKey) keys.push([m.posterKey, "photo"]);
+    for (const [key, kind] of keys) {
+      if (!key.startsWith(prefix)) return "Bad photo reference";
+      if (!(await verifyUpload(key, kind))) return "A photo didn't finish uploading. Try again.";
+    }
+  }
+  return null;
 }
 
 /**

@@ -18,11 +18,16 @@ type Props = {
 };
 
 /**
- * Fullscreen photo viewer.
+ * Fullscreen photo and video viewer.
  *
  * The gallery crops to a uniform 4:5 with object-cover; here the image is
  * contained instead, because seeing the whole idol — crown to feet, and the
  * pandal around it — is the entire reason someone taps a photo.
+ *
+ * Videos exist only here. Everywhere else shows the poster frame, so the
+ * first video byte is fetched when the viewer opens on it, and the element
+ * unmounts (and stops fetching) the moment they swipe away. It starts muted
+ * — the only autoplay browsers allow — with controls to unmute.
  */
 export default function Lightbox({ photos, startIndex, alt, onClose }: Props) {
   const [i, setI] = useState(startIndex);
@@ -95,7 +100,7 @@ export default function Lightbox({ photos, startIndex, alt, onClose }: Props) {
     >
       <div className="flex items-center justify-between px-gutter pt-[max(0.9rem,env(safe-area-inset-top))] pb-2">
         <span className="numeric text-[11px] uppercase tracking-[0.08em] text-paper/70">
-          {photos.length > 1 ? `${i + 1} / ${photos.length}` : "Photo"}
+          {photos.length > 1 ? `${i + 1} / ${photos.length}` : photos[i].video ? "Video" : "Photo"}
         </span>
         <span className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           {report === "closed" && (
@@ -150,15 +155,31 @@ export default function Lightbox({ photos, startIndex, alt, onClose }: Props) {
         className="relative min-h-0 flex-1"
         onClick={(e) => e.stopPropagation()}
       >
-        <Image
-          key={photos[i].id}
-          src={photos[i].url}
-          alt={`${alt}, photo ${i + 1} of ${photos.length}`}
-          fill
-          sizes="100vw"
-          priority
-          className="animate-fade object-contain"
-        />
+        {photos[i].video ? (
+          <video
+            key={photos[i].id}
+            src={photos[i].video.url}
+            poster={photos[i].url}
+            controls
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-label={`${alt}, video ${i + 1} of ${photos.length}`}
+            className="animate-fade absolute inset-0 h-full w-full object-contain"
+          />
+        ) : (
+          <Image
+            key={photos[i].id}
+            src={photos[i].url}
+            alt={`${alt}, photo ${i + 1} of ${photos.length}`}
+            fill
+            sizes="100vw"
+            priority
+            className="animate-fade object-contain"
+          />
+        )}
 
         {/* Arrows for pointer users; touch already swipes. */}
         {photos.length > 1 &&

@@ -215,7 +215,7 @@ export default function PandalDetail({
               <button
                 type="button"
                 onClick={() => setLightboxAt(i)}
-                aria-label={`Open photo ${i + 1} of ${pandal.photos.length} full screen`}
+                aria-label={`${photo.video ? "Play video" : "Open photo"} ${i + 1} of ${pandal.photos.length} full screen`}
                 className="absolute inset-0 overflow-hidden rounded-xl bg-paper-warm shadow-[var(--shadow-elevated)] transition-transform duration-150 ease-out active:scale-[0.98]"
               >
                 <Image
@@ -229,6 +229,13 @@ export default function PandalDetail({
                 />
                 {/* Depth treatment so photos sit under the type, not fight it. */}
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/35 to-transparent" />
+                {/* A video shows its poster here; the file only loads in the lightbox. */}
+                {photo.video && (
+                  <span className="numeric absolute top-2 left-2 flex items-center gap-1 rounded-full bg-ink/70 py-1 pr-2 pl-1.5 text-[10px] tracking-[0.04em] text-paper backdrop-blur">
+                    <Icon name="play" size={10} strokeWidth={2.4} className="fill-current" />
+                    {Math.floor(photo.video.durationS / 60)}:{String(photo.video.durationS % 60).padStart(2, "0")}
+                  </span>
+                )}
               </button>
               {/* A sibling, not a child, of the photo button — nested buttons
                   aren't allowed, and the heart must not open the lightbox. */}

@@ -57,23 +57,24 @@ async function loadPandals(ids: string[]) {
 
   // Cover photo per pandal: the oldest live one, same rule as the map.
   const covers = await db
-    .select({ pandalId: photos.pandalId, r2Key: photos.r2Key })
+    .select({ pandalId: photos.pandalId, r2Key: photos.r2Key, posterKey: photos.posterKey })
     .from(photos)
     .where(and(inArray(photos.pandalId, ids), eq(photos.status, "live")))
     .orderBy(asc(photos.createdAt));
   const cover = new Map<string, string>();
-  for (const c of covers) if (!cover.has(c.pandalId)) cover.set(c.pandalId, photoUrl(c.r2Key));
+  for (const c of covers) if (!cover.has(c.pandalId)) cover.set(c.pandalId, photoUrl(c.posterKey ?? c.r2Key));
 
   return rows.map((r) => ({ ...r, thumb: cover.get(r.id) ?? null }));
 }
 
 async function loadPhotos(ids: string[]) {
-  if (ids.length === 0) return new Map<string, { id: string; pandalId: string; r2Key: string; status: ContentStatus; createdAt: Date }>();
+  if (ids.length === 0) return new Map<string, { id: string; pandalId: string; r2Key: string; posterKey: string | null; status: ContentStatus; createdAt: Date }>();
   const rows = await db
     .select({
       id: photos.id,
       pandalId: photos.pandalId,
       r2Key: photos.r2Key,
+      posterKey: photos.posterKey,
       status: photos.status,
       createdAt: photos.createdAt,
     })
@@ -158,7 +159,7 @@ export async function getModerationQueue(): Promise<{ open: ReportTarget[]; hidd
         kind, id, pandalId: pd.id,
         title: `Photo on ${pd.name}`,
         subtitle: `${pd.gully}, ${pd.area}`,
-        thumb: photoUrl(ph.r2Key),
+        thumb: photoUrl(ph.posterKey ?? ph.r2Key),
         status: ph.status,
         addedBy: pd.addedBy,
         claimedBy: pd.claimedBy,

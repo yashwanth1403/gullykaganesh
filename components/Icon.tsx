@@ -28,6 +28,8 @@ const PATHS = {
   ),
   chevronRight: <path d="m9 6 6 6-6 6" />,
   chevronLeft: <path d="m15 6-6 6 6 6" />,
+  // Marks a video where a still is shown in its place.
+  play: <path d="M8 5.5v13l10.5-6.5L8 5.5Z" />,
   arrowLeft: <path d="M19 12H5m6-6-6 6 6 6" />,
   check: <path d="m5 12.5 4.5 4.5L19 7.5" />,
   x: <path d="M6 6l12 12M18 6 6 18" />,
