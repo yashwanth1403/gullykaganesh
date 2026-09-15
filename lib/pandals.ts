@@ -7,9 +7,9 @@
  * to the browser.
  */
 
-/** Immersion day within the festival, 1 (Chaturthi) through 13. */
-export type VisarjanDay = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
-export const VISARJAN_DAYS: VisarjanDay[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+/** Immersion day within the festival, 1 (Chaturthi) through 16. */
+export type VisarjanDay = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16;
+export const VISARJAN_DAYS: VisarjanDay[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
 export type Pandal = {
   id: string;
@@ -32,6 +32,8 @@ export type Pandal = {
   ecoFriendly: boolean;
   /** This year's theme, if any. */
   theme: string | null;
+  /** Free text from whoever added or runs it; null when nothing was written. */
+  description: string | null;
   visarjanDay: VisarjanDay;
   /**
    * "Ganpati Bappa Morya" taps and geofenced "darshan done" check-ins. The
@@ -66,7 +68,7 @@ export type PandalPhoto = {
 
 /** Ganesh Chaturthi 2026. Day 1 of the festival. */
 export const FESTIVAL_START = new Date("2026-09-14T00:00:00+05:30");
-export const FESTIVAL_DAYS = 13;
+export const FESTIVAL_DAYS = 16;
 
 /** Approximate centre of the pin cloud — Hyderabad, not a random guess. */
 export const HYDERABAD_CENTER: [number, number] = [78.4600, 17.4180];

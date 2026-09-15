@@ -138,6 +138,7 @@ export type EditInitial = {
   establishedYear: number | null;
   ecoFriendly: boolean;
   theme: string | null;
+  description: string | null;
   visarjanDay: VisarjanDay;
   lat: number;
   lng: number;
@@ -338,6 +339,7 @@ export default function AddPandalForm({ initial }: { initial?: EditInitial }) {
         establishedYear: form.get("establishedYear"),
         ecoFriendly: form.get("ecoFriendly") === "on",
         theme: form.get("theme") ?? "",
+        description: form.get("description") ?? "",
         visarjanDay,
         lat: location.lat,
         lng: location.lng,
@@ -543,6 +545,16 @@ export default function AddPandalForm({ initial }: { initial?: EditInitial }) {
         </div>
         <Field label="Theme" hint="optional">
           <input name="theme" maxLength={80} className={field} placeholder="ISRO, Ayodhya temple…" autoComplete="off" defaultValue={initial?.theme ?? undefined} />
+        </Field>
+        <Field label="Description" hint="optional">
+          <textarea
+            name="description"
+            maxLength={500}
+            rows={3}
+            className={`${field} resize-y leading-relaxed`}
+            placeholder="Aarti at 7pm daily, laddu auction on the last day…"
+            defaultValue={initial?.description ?? undefined}
+          />
         </Field>
         {/* A native checkbox styled as a pill: the label is the whole hit area. */}
         <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-line bg-paper px-3.5 py-3 transition-[background-color] duration-150 ease-out hover:bg-paper-warm has-[:checked]:border-leaf has-[:checked]:bg-leaf/8 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-turmeric">

@@ -197,6 +197,10 @@ export default function PandalDetail({
             )}
           </ul>
         )}
+
+        {pandal.description && (
+          <p className="mt-3 whitespace-pre-line text-[14px] leading-relaxed text-ink">{pandal.description}</p>
+        )}
       </div>
 
       <div // scroll-px matches the padding: without it snap alignment scrolls the

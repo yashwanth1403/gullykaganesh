@@ -64,6 +64,20 @@
       "when": 1789455879172,
       "tag": "0008_media_video",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789473158652,
+      "tag": "0009_visarjan_day_1_to_16",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789473336707,
+      "tag": "0010_pandal_description",
+      "breakpoints": true
     }
   ]
 }

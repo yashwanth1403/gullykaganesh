@@ -66,6 +66,7 @@ export async function createPandal(raw: unknown): Promise<CreateResult> {
         establishedYear: input.establishedYear,
         ecoFriendly: input.ecoFriendly,
         theme: input.theme,
+        description: input.description,
         visarjanDay: input.visarjanDay,
         location: { x: input.lng, y: input.lat },
         submittedBy: user.id,

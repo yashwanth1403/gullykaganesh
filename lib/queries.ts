@@ -51,6 +51,7 @@ export async function getLivePandals(): Promise<Pandal[]> {
       establishedYear: pandals.establishedYear,
       ecoFriendly: pandals.ecoFriendly,
       theme: pandals.theme,
+      description: pandals.description,
       visarjanDay: pandals.visarjanDay,
       moryaCount: pandals.moryaCount,
       visitCount: pandals.visitCount,
@@ -119,6 +120,7 @@ export type ManagedPandal = {
   establishedYear: number | null;
   ecoFriendly: boolean;
   theme: string | null;
+  description: string | null;
   visarjanDay: VisarjanDay;
   landmark: boolean;
   status: "live" | "hidden" | "removed";
@@ -151,6 +153,7 @@ export async function getPandalForManage(id: string): Promise<ManagedPandal | nu
       establishedYear: pandals.establishedYear,
       ecoFriendly: pandals.ecoFriendly,
       theme: pandals.theme,
+      description: pandals.description,
       visarjanDay: pandals.visarjanDay,
       landmark: pandals.landmark,
       status: pandals.status,

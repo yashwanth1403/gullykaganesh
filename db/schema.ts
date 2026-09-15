@@ -92,7 +92,9 @@ export const pandals = pgTable(
     ecoFriendly: boolean().notNull().default(false),
     /** This year's theme, if the mandapam has one ("ISRO", "Ayodhya temple"). */
     theme: text(),
-    /** Immersion day within the festival, 1 through 13. */
+    /** A few lines from the committee — what to expect, timings, history. */
+    description: text(),
+    /** Immersion day within the festival, 1 through 16. */
     visarjanDay: smallint().notNull(),
     /** City-famous pandals, pre-seeded. Everything else is user-submitted. */
     landmark: boolean().notNull().default(false),
@@ -114,7 +116,7 @@ export const pandals = pgTable(
     index("pandals_location_gist").using("gist", t.location),
     index("pandals_submitted_by_idx").on(t.submittedBy),
     index("pandals_claimed_by_idx").on(t.claimedBy),
-    check("pandals_visarjan_day_check", sql`${t.visarjanDay} between 1 and 13`),
+    check("pandals_visarjan_day_check", sql`${t.visarjanDay} between 1 and 16`),
     check("pandals_established_year_check", sql`${t.establishedYear} between 1800 and 2100`),
     check(
       "pandals_instagram_handle_check",

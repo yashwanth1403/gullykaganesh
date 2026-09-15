@@ -64,6 +64,10 @@ export const pandalInput = z.object({
     (v) => (v == null ? "" : v),
     z.string().trim().max(80, "Keep the theme under 80 characters").transform((s) => s || null),
   ),
+  description: z.preprocess(
+    (v) => (v == null ? "" : v),
+    z.string().trim().max(500, "Keep the description under 500 characters").transform((s) => s || null),
+  ),
   visarjanDay: z.coerce.number().refine((d): d is (typeof VISARJAN_DAYS)[number] =>
     (VISARJAN_DAYS as number[]).includes(d),
   ),
