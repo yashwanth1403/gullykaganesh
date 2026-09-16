@@ -1,10 +1,16 @@
+import type { Metadata } from "next";
 import AddPandalForm from "@/components/AddPandalForm";
 import SignIn from "@/components/SignIn";
 import SubpageHeader from "@/components/SubpageHeader";
 import { getCurrentUser } from "@/lib/auth";
 import { signOut } from "@/app/auth/actions";
 
-export const metadata = { title: "Add a mandapam — GullyKaGanesh" };
+export const metadata: Metadata = {
+  title: "Add your Ganesh pandal",
+  description:
+    "Put your gully's Ganesh mandapam on Hyderabad's map of unique pandals. Drop a pin, upload a photo and tell the city what makes your theme special.",
+  alternates: { canonical: "/add" },
+};
 
 export default async function AddPage({
   searchParams,

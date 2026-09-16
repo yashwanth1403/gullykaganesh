@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import Icon, { type IconName } from "@/components/Icon";
@@ -6,9 +7,16 @@ import SubpageHeader from "@/components/SubpageHeader";
 import type { Pandal } from "@/lib/pandals";
 import { getRecords, type Ranked } from "@/lib/records";
 
-export const metadata = {
-  title: "Top Ganesh of Hyderabad 2026 — GullyKaGanesh",
-  description: "Tallest, most loved, oldest and smallest — the city's mandapams, ranked by the people who visit them.",
+export const metadata: Metadata = {
+  title: "Top Ganesh pandals of Hyderabad 2026",
+  description:
+    "Hyderabad's Ganesh pandals ranked by the people who visit them — tallest idols, most loved mandapams, oldest committees and clay Ganesh, updated live through Ganesh Chaturthi 2026.",
+  alternates: { canonical: "/top" },
+  openGraph: {
+    title: "Top Ganesh pandals of Hyderabad 2026",
+    description: "Tallest, most loved, oldest and clay — Hyderabad's Ganesh mandapams, ranked live by the people who go.",
+    url: "/top",
+  },
 };
 
 /** Same cadence as the map: the numbers move, the page follows within a minute. */

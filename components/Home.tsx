@@ -370,6 +370,14 @@ export default function Home({ pandals: cached }: { pandals: Pandal[] }) {
 
   return (
     <main className="fixed inset-0 h-dvh w-full overflow-hidden bg-paper">
+      {/* The map draws nothing a crawler can read. This paragraph is what
+          the home page *says*, for search engines and screen readers alike. */}
+      <p className="sr-only">
+        GullyKaGanesh is Hyderabad&apos;s crowdsourced map of unique Ganesh pandals and
+        mandapams for Ganesh Chaturthi 2026. Browse creative Ganesh idol themes across the
+        city, find the ones near you, plan your darshan route before visarjan, and add your
+        gully&apos;s Ganesh so the whole city can find it.
+      </p>
       <MapView
         pandals={visible}
         currentDay={currentDay}

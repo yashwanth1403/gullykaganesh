@@ -11,7 +11,7 @@ import { canEdit } from "@/lib/permissions";
 import { getPandalForManage } from "@/lib/queries";
 import { signOut } from "@/app/auth/actions";
 
-export const metadata = { title: "Edit or claim — GullyKaGanesh" };
+export const metadata = { title: "Edit or claim", robots: { index: false, follow: false } };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

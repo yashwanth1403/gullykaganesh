@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/db";
 import { pandals, photos, profiles } from "@/db/schema";
@@ -36,6 +36,43 @@ export function toPandalPhoto(p: {
 }
 
 export async function getLivePandals(): Promise<Pandal[]> {
+  return queryLivePandals(eq(pandals.status, "live"));
+}
+
+/**
+ * One live pandal, for its public page. Hidden and removed rows are a 404
+ * there — the owner reaches those through /p/[id]/manage instead.
+ */
+export async function getLivePandal(id: string): Promise<Pandal | null> {
+  const [p] = await queryLivePandals(and(eq(pandals.id, id), eq(pandals.status, "live"))!);
+  return p ?? null;
+}
+
+/** Ids, dates and cover photos only — all the sitemap needs, without the joins. */
+export async function getLivePandalsForSitemap(): Promise<
+  { id: string; updatedAt: Date; cover: string | null }[]
+> {
+  const rows = await db
+    .select({ id: pandals.id, updatedAt: pandals.updatedAt })
+    .from(pandals)
+    .where(eq(pandals.status, "live"));
+  if (rows.length === 0) return [];
+
+  const covers = await db
+    .select({ pandalId: photos.pandalId, r2Key: photos.r2Key, posterKey: photos.posterKey, kind: photos.kind })
+    .from(photos)
+    .where(and(eq(photos.status, "live"), inArray(photos.pandalId, rows.map((r) => r.id))))
+    .orderBy(desc(photos.isPin), desc(photos.likeCount), asc(photos.createdAt));
+  const cover = new Map<string, string>();
+  for (const c of covers) {
+    if (cover.has(c.pandalId)) continue;
+    const key = c.kind === "video" ? c.posterKey : c.r2Key;
+    if (key) cover.set(c.pandalId, photoUrl(key));
+  }
+  return rows.map((r) => ({ ...r, cover: cover.get(r.id) ?? null }));
+}
+
+async function queryLivePandals(where: SQL): Promise<Pandal[]> {
   const claimant = alias(profiles, "claimant");
   const rows = await db
     .select({
@@ -63,7 +100,7 @@ export async function getLivePandals(): Promise<Pandal[]> {
     .from(pandals)
     .leftJoin(profiles, eq(pandals.submittedBy, profiles.id))
     .leftJoin(claimant, eq(pandals.claimedBy, claimant.id))
-    .where(eq(pandals.status, "live"))
+    .where(where)
     .orderBy(asc(pandals.createdAt));
 
   if (rows.length === 0) return [];

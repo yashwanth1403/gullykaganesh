@@ -4,7 +4,7 @@ import SubpageHeader from "@/components/SubpageHeader";
 import { getModerationQueue } from "@/lib/admin-queries";
 import { getCurrentUser } from "@/lib/auth";
 
-export const metadata = { title: "Reports — GullyKaGanesh" };
+export const metadata = { title: "Reports", robots: { index: false, follow: false } };
 
 /**
  * The other half of live-then-report moderation. Admins are flagged by hand
