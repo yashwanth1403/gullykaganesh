@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Rozha_One, Karla, JetBrains_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import {
   SITE_ALIASES,
@@ -119,6 +120,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full bg-paper text-ink">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(siteJsonLd) }} />
         {children}
+        <Analytics />
       </body>
     </html>
   );
