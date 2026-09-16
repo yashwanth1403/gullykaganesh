@@ -13,9 +13,24 @@ export const SITE_DESCRIPTION =
 export const SITE_TITLE = "GullyKaGanesh — Unique Ganesh pandals & mandapams across Hyderabad";
 
 /** Google ignores these; Bing and the Indian aggregators still read them. */
+/**
+ * How people actually type the name. "Gully" is the English spelling; "galli"
+ * and "gali" are how the Hindi/Telugu word is usually romanised, and the
+ * Instagram handle is one word. All of them should resolve to us.
+ */
+export const SITE_ALIASES = [
+  "Gully Ka Ganesh",
+  "GalliKaGanesh",
+  "Galli Ka Ganesh",
+  "Gali Ka Ganesh",
+  "GaliKaGanesh",
+  "Gully Ganesh Hyderabad",
+  "Galli Ganesh Hyderabad",
+];
+
 export const SITE_KEYWORDS = [
   "GullyKaGanesh",
-  "Gully Ka Ganesh",
+  ...SITE_ALIASES,
   "unique Ganesh pandals Hyderabad",
   "Ganesh pandals in Hyderabad",
   "Ganesh mandapam Hyderabad",

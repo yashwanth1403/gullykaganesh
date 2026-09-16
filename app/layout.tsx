@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Rozha_One, Karla, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import {
+  SITE_ALIASES,
   SITE_DESCRIPTION,
   SITE_KEYWORDS,
   SITE_NAME,
@@ -69,7 +70,8 @@ export const metadata: Metadata = {
 /**
  * What the site *is*, for the knowledge panel and the sitelinks searchbox
  * heuristics: one WebSite, published by one Organization, both named
- * GullyKaGanesh. Spelled-apart aliases catch "gully ka ganesh" queries.
+ * GullyKaGanesh. The aliases catch "gully ka ganesh", "galli ka ganesh" and
+ * the other spellings people search.
  */
 const siteJsonLd = {
   "@context": "https://schema.org",
@@ -78,7 +80,7 @@ const siteJsonLd = {
       "@type": "Organization",
       "@id": `${SITE_URL}/#org`,
       name: SITE_NAME,
-      alternateName: ["Gully Ka Ganesh", "Gully Ka Ganesh Hyderabad"],
+      alternateName: SITE_ALIASES,
       url: SITE_URL,
       logo: `${SITE_URL}/icon.png`,
       areaServed: { "@type": "City", name: "Hyderabad" },
@@ -87,7 +89,7 @@ const siteJsonLd = {
       "@type": "WebSite",
       "@id": `${SITE_URL}/#website`,
       name: SITE_NAME,
-      alternateName: "Gully Ka Ganesh",
+      alternateName: SITE_ALIASES,
       url: SITE_URL,
       description: SITE_DESCRIPTION,
       inLanguage: "en-IN",
