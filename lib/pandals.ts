@@ -51,6 +51,8 @@ export type Pandal = {
   verified: boolean;
   /** City-famous pandals, pre-seeded. Everything else is user-submitted. */
   landmark: boolean;
+  /** When it was put on the map, epoch ms. Drives the "new today" filter. */
+  addedAt: number;
   /** Live photos, most-liked first (ties: oldest). The first is the cover. Can be empty. */
   photos: PandalPhoto[];
 };

@@ -28,6 +28,8 @@ import {
 import { useGeolocation } from "@/lib/use-geolocation";
 
 const DAY_MS = 86_400_000;
+/** "New today": put on the map within the last day. */
+const NEW_WINDOW_MS = DAY_MS;
 
 function festivalPosition() {
   const now = Date.now();
@@ -327,6 +329,10 @@ export default function Home({ pandals: cached }: { pandals: Pandal[] }) {
   const [tierFilter, setTierFilter] = useState<Urgency[] | null>(null);
   // Clay idols only — the one attribute filter people actually ask for.
   const [ecoOnly, setEcoOnly] = useState(false);
+  // Only what went up in the last day — "what's new since I last looked".
+  const [newOnly, setNewOnly] = useState(false);
+  // Fixed per mount, so the filter doesn't drift while the sheet is open.
+  const [newSince] = useState(() => Date.now() - NEW_WINDOW_MS);
 
   const live = useMemo(
     () => pandals.filter((p) => isStillUp(p, currentDay)),
@@ -339,8 +345,9 @@ export default function Home({ pandals: cached }: { pandals: Pandal[] }) {
     let list = live;
     if (tierFilter) list = list.filter((p) => tierFilter.includes(urgencyOf(p, currentDay)));
     if (ecoOnly) list = list.filter((p) => p.ecoFriendly);
+    if (newOnly) list = list.filter((p) => p.addedAt >= newSince);
     return list;
-  }, [live, currentDay, tierFilter, ecoOnly]);
+  }, [live, currentDay, tierFilter, ecoOnly, newOnly, newSince]);
 
   const sorted = useMemo(() => {
     const list = sortNearby([...visible], currentDay, userPos);
@@ -367,6 +374,7 @@ export default function Home({ pandals: cached }: { pandals: Pandal[] }) {
     return c;
   }, [live, currentDay]);
   const ecoCount = useMemo(() => live.filter((p) => p.ecoFriendly).length, [live]);
+  const newCount = useMemo(() => live.filter((p) => p.addedAt >= newSince).length, [live, newSince]);
 
   return (
     <main className="fixed inset-0 h-dvh w-full overflow-hidden bg-paper">
@@ -521,6 +529,25 @@ export default function Home({ pandals: cached }: { pandals: Pandal[] }) {
                     Clay idols
                   </span>
                   <span className="numeric text-[9.5px] text-leaf">{ecoCount}</span>
+                </button>
+                {/* Turmeric, the colour of the "Add yours" button: this chip
+                    is where those additions show up. */}
+                <button
+                  type="button"
+                  aria-pressed={newOnly}
+                  onClick={() => setNewOnly((v) => !v)}
+                  className="flex items-center gap-1.5 rounded-full border py-1 pr-2.5 pl-2 transition-[background-color,border-color,transform] duration-150 ease-out hover:bg-paper-warm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-turmeric active:scale-[0.97]"
+                  style={
+                    newOnly
+                      ? { borderColor: "var(--color-turmeric)", background: "color-mix(in srgb, var(--color-turmeric) 16%, transparent)" }
+                      : { borderColor: "var(--color-line)", background: "var(--color-paper)" }
+                  }
+                >
+                  <Icon name="sparkle" size={10} className="text-turmeric" />
+                  <span className={`numeric text-[9.5px] uppercase tracking-[0.05em] ${newOnly ? "text-ink" : "text-ink-dim"}`}>
+                    New today
+                  </span>
+                  <span className="numeric text-[9.5px] text-turmeric">{newCount}</span>
                 </button>
               </div>
             </div>

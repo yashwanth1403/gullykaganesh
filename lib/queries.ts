@@ -94,6 +94,7 @@ async function queryLivePandals(where: SQL): Promise<Pandal[]> {
       visitCount: pandals.visitCount,
       verified: pandals.verified,
       landmark: pandals.landmark,
+      createdAt: pandals.createdAt,
       addedBy: profiles.displayName,
       claimedBy: claimant.displayName,
     })
@@ -133,10 +134,11 @@ async function queryLivePandals(where: SQL): Promise<Pandal[]> {
     byPandal.set(p.pandalId, list);
   }
 
-  return rows.map(({ location, ...r }) => ({
+  return rows.map(({ location, createdAt, ...r }) => ({
     ...r,
     lng: location.x,
     lat: location.y,
+    addedAt: createdAt.getTime(),
     visarjanDay: r.visarjanDay as VisarjanDay,
     photos: byPandal.get(r.id) ?? [],
   }));
