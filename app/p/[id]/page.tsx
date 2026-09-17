@@ -72,14 +72,14 @@ export async function generateMetadata({ params }: PageProps<"/p/[id]">): Promis
   };
 }
 
-function Tag({ icon, tone, children }: { icon: "sparkle" | "calendar" | "leaf"; tone?: "leaf"; children: React.ReactNode }) {
+function Tag({ icon, tone, children }: { icon: "sparkle" | "calendar" | "leaf" | "modak"; tone?: "leaf"; children: React.ReactNode }) {
   return (
     <li
       className={`flex items-center gap-1.5 rounded-full border py-1 pr-2.5 pl-2 ${
         tone === "leaf" ? "border-leaf/40 bg-leaf/8 text-leaf" : "border-line bg-paper text-ink"
       }`}
     >
-      <Icon name={icon} size={12} className={tone ? undefined : icon === "sparkle" ? "text-turmeric" : "opacity-70"} />
+      <Icon name={icon} size={12} className={tone ? undefined : icon === "sparkle" ? "text-turmeric" : icon === "modak" ? "text-kumkum" : "opacity-70"} />
       {children}
     </li>
   );
