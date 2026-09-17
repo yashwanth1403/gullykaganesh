@@ -6,7 +6,7 @@ import Icon, { Spinner, type IconName } from "./Icon";
 import LocationPicker from "./LocationPicker";
 import { createPandal, requestUploadUrls } from "@/app/add/actions";
 import { updatePandal } from "@/app/p/[id]/actions";
-import { VISARJAN_DAYS, visarjanDate, type PandalPhoto, type VisarjanDay } from "@/lib/pandals";
+import { FESTIVAL_START, VISARJAN_DAYS, visarjanDate, type PandalPhoto, type VisarjanDay } from "@/lib/pandals";
 import { resizeImage, thumbOf, type ResizedPhoto } from "@/lib/resize-image";
 import { prepareVideo, VideoRejected, type PreparedVideo } from "@/lib/prepare-video";
 import type { Place } from "@/lib/geocode";
@@ -139,6 +139,7 @@ export type EditInitial = {
   ecoFriendly: boolean;
   theme: string | null;
   description: string | null;
+  annadhanamDate: string | null;
   visarjanDay: VisarjanDay;
   lat: number;
   lng: number;
@@ -346,6 +347,7 @@ export default function AddPandalForm({ initial }: { initial?: EditInitial }) {
         ecoFriendly: form.get("ecoFriendly") === "on",
         theme: form.get("theme") ?? "",
         description: form.get("description") ?? "",
+        annadhanamDate: form.get("annadhanamDate") ?? "",
         visarjanDay,
         lat: location.lat,
         lng: location.lng,
@@ -580,6 +582,17 @@ export default function AddPandalForm({ initial }: { initial?: EditInitial }) {
             className={`${field} resize-y leading-relaxed`}
             placeholder="Aarti at 7pm daily, laddu auction on the last day…"
             defaultValue={initial?.description ?? undefined}
+          />
+        </Field>
+        <Field label="Annadhanam" hint="date, optional">
+          {/* Native picker: on a phone it opens the OS calendar, which is the
+              right control for "which day". Cleared → "" → null on the server. */}
+          <input
+            name="annadhanamDate"
+            type="date"
+            min={FESTIVAL_START.toISOString().slice(0, 10)}
+            className={field}
+            defaultValue={initial?.annadhanamDate ?? undefined}
           />
         </Field>
         {/* A native checkbox styled as a pill: the label is the whole hit area. */}

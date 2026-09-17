@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  date,
   geometry,
   index,
   integer,
@@ -94,6 +95,8 @@ export const pandals = pgTable(
     theme: text(),
     /** A few lines from the committee — what to expect, timings, history. */
     description: text(),
+    /** The day the mandapam serves annadhanam (free prasadam meal), if it does. */
+    annadhanamDate: date({ mode: "string" }),
     /** Immersion day within the festival, 1 through 16. */
     visarjanDay: smallint().notNull(),
     /** City-famous pandals, pre-seeded. Everything else is user-submitted. */

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Icon from "@/components/Icon";
 import SubpageHeader from "@/components/SubpageHeader";
-import { thumbUrl, visarjanDate } from "@/lib/pandals";
+import { annadhanamLabel, thumbUrl, visarjanDate } from "@/lib/pandals";
 import { getLivePandal } from "@/lib/queries";
 import { SITE_NAME, SITE_URL, absoluteUrl, jsonLd } from "@/lib/site";
 
@@ -154,10 +154,11 @@ export default async function PandalPage({ params }: PageProps<"/p/[id]">) {
           </span>
         </p>
 
-        {(p.theme || p.establishedYear || p.ecoFriendly) && (
+        {(p.theme || p.establishedYear || p.ecoFriendly || p.annadhanamDate) && (
           <ul className="mt-3 flex flex-wrap gap-1.5 text-[12.5px]">
             {p.theme && <Tag icon="sparkle">{p.theme}</Tag>}
             {p.establishedYear && <Tag icon="calendar">Since {p.establishedYear}</Tag>}
+            {p.annadhanamDate && <Tag icon="modak">Annadhanam {annadhanamLabel(p.annadhanamDate)}</Tag>}
             {p.ecoFriendly && <Tag icon="leaf" tone="leaf">Clay idol</Tag>}
           </ul>
         )}

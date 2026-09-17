@@ -12,6 +12,7 @@ import { useSignInPrompt } from "./SignInPrompt";
 import type { VisitNotice } from "./Home";
 import {
   type Pandal,
+  annadhanamLabel,
   urgencyOf,
   URGENCY_COLOR,
   daysUntilVisarjan,
@@ -175,7 +176,7 @@ export default function PandalDetail({
 
         {/* The things that make this one *this* one. Only what's known; an
             empty row would be worse than none. */}
-        {(pandal.theme || pandal.establishedYear || pandal.ecoFriendly) && (
+        {(pandal.theme || pandal.establishedYear || pandal.ecoFriendly || pandal.annadhanamDate) && (
           <ul className="mt-3 flex flex-wrap gap-1.5 text-[12.5px] text-ink">
             {pandal.theme && (
               <li className="flex items-center gap-1.5 rounded-full border border-line bg-paper py-1 pr-2.5 pl-2">
@@ -187,6 +188,12 @@ export default function PandalDetail({
               <li className="flex items-center gap-1.5 rounded-full border border-line bg-paper py-1 pr-2.5 pl-2">
                 <Icon name="calendar" size={12} className="opacity-70" />
                 Since {pandal.establishedYear}
+              </li>
+            )}
+            {pandal.annadhanamDate && (
+              <li className="flex items-center gap-1.5 rounded-full border border-line bg-paper py-1 pr-2.5 pl-2">
+                <Icon name="modak" size={12} className="text-kumkum" />
+                Annadhanam {annadhanamLabel(pandal.annadhanamDate)}
               </li>
             )}
             {pandal.ecoFriendly && (

@@ -89,6 +89,7 @@ async function queryLivePandals(where: SQL): Promise<Pandal[]> {
       ecoFriendly: pandals.ecoFriendly,
       theme: pandals.theme,
       description: pandals.description,
+      annadhanamDate: pandals.annadhanamDate,
       visarjanDay: pandals.visarjanDay,
       moryaCount: pandals.moryaCount,
       visitCount: pandals.visitCount,
@@ -160,6 +161,7 @@ export type ManagedPandal = {
   ecoFriendly: boolean;
   theme: string | null;
   description: string | null;
+  annadhanamDate: string | null;
   visarjanDay: VisarjanDay;
   landmark: boolean;
   status: "live" | "hidden" | "removed";
@@ -193,6 +195,7 @@ export async function getPandalForManage(id: string): Promise<ManagedPandal | nu
       ecoFriendly: pandals.ecoFriendly,
       theme: pandals.theme,
       description: pandals.description,
+      annadhanamDate: pandals.annadhanamDate,
       visarjanDay: pandals.visarjanDay,
       landmark: pandals.landmark,
       status: pandals.status,

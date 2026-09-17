@@ -1,0 +1,1 @@
+ALTER TABLE "pandals" ADD COLUMN "annadhanam_date" date;

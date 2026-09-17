@@ -36,6 +36,8 @@ export type Pandal = {
   theme: string | null;
   /** Free text from whoever added or runs it; null when nothing was written. */
   description: string | null;
+  /** "YYYY-MM-DD" of the annadhanam (free meal), null when none is planned. */
+  annadhanamDate: string | null;
   visarjanDay: VisarjanDay;
   /**
    * "Ganpati Bappa Morya" taps and geofenced "darshan done" check-ins. The
@@ -150,6 +152,16 @@ export function thumbUrl(src: string): string {
 export function visarjanDate(p: Pandal): string {
   const d = new Date(FESTIVAL_START.getTime() + (p.visarjanDay - 1) * 86_400_000);
   return d.toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    timeZone: "Asia/Kolkata",
+  });
+}
+
+/** "Sat 20 Sept" for a stored "YYYY-MM-DD"; the date is an IST calendar day. */
+export function annadhanamLabel(date: string): string {
+  return new Date(`${date}T00:00:00+05:30`).toLocaleDateString("en-IN", {
     weekday: "short",
     day: "numeric",
     month: "short",

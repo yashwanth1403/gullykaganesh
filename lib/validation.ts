@@ -68,6 +68,15 @@ export const pandalInput = z.object({
     (v) => (v == null ? "" : v),
     z.string().trim().max(500, "Keep the description under 500 characters").transform((s) => s || null),
   ),
+  // A native date input posts "" when cleared, "YYYY-MM-DD" otherwise.
+  annadhanamDate: z.preprocess(
+    (v) => (v === "" || v == null ? null : v),
+    z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date for the annadhanam")
+      .refine((s) => !Number.isNaN(Date.parse(s)), "That's not a real date")
+      .nullable(),
+  ),
   visarjanDay: z.coerce.number().refine((d): d is (typeof VISARJAN_DAYS)[number] =>
     (VISARJAN_DAYS as number[]).includes(d),
   ),
