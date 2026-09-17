@@ -72,14 +72,14 @@ export async function generateMetadata({ params }: PageProps<"/p/[id]">): Promis
   };
 }
 
-function Tag({ icon, tone, children }: { icon: "sparkle" | "calendar" | "leaf" | "modak"; tone?: "leaf"; children: React.ReactNode }) {
+function Tag({ icon, tone, children }: { icon: "sparkle" | "calendar" | "leaf"; tone?: "leaf"; children: React.ReactNode }) {
   return (
     <li
       className={`flex items-center gap-1.5 rounded-full border py-1 pr-2.5 pl-2 ${
         tone === "leaf" ? "border-leaf/40 bg-leaf/8 text-leaf" : "border-line bg-paper text-ink"
       }`}
     >
-      <Icon name={icon} size={12} className={tone ? undefined : icon === "sparkle" ? "text-turmeric" : icon === "modak" ? "text-kumkum" : "opacity-70"} />
+      <Icon name={icon} size={12} className={tone ? undefined : icon === "sparkle" ? "text-turmeric" : "opacity-70"} />
       {children}
     </li>
   );
@@ -154,11 +154,26 @@ export default async function PandalPage({ params }: PageProps<"/p/[id]">) {
           </span>
         </p>
 
-        {(p.theme || p.establishedYear || p.ecoFriendly || p.annadhanamDate) && (
+        {p.annadhanamDate && (
+          <div className="mt-3 flex items-center gap-3 rounded-[12px] border border-turmeric/50 bg-turmeric/12 px-3.5 py-2.5">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-turmeric text-ink">
+              <Icon name="rice" size={20} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="numeric block text-[11px] uppercase tracking-[0.07em] text-ink">Annadhanam</span>
+              <span className="block text-[12.5px] leading-snug text-ink-dim">Free prasadam meal at the mandapam, all welcome</span>
+            </span>
+            <span className="numeric flex shrink-0 items-center gap-1.5 text-[13px] text-ink">
+              <Icon name="calendar" size={13} className="opacity-70" />
+              {annadhanamLabel(p.annadhanamDate)}
+            </span>
+          </div>
+        )}
+
+        {(p.theme || p.establishedYear || p.ecoFriendly) && (
           <ul className="mt-3 flex flex-wrap gap-1.5 text-[12.5px]">
             {p.theme && <Tag icon="sparkle">{p.theme}</Tag>}
             {p.establishedYear && <Tag icon="calendar">Since {p.establishedYear}</Tag>}
-            {p.annadhanamDate && <Tag icon="modak">Annadhanam {annadhanamLabel(p.annadhanamDate)}</Tag>}
             {p.ecoFriendly && <Tag icon="leaf" tone="leaf">Clay idol</Tag>}
           </ul>
         )}

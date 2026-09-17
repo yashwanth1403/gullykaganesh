@@ -28,6 +28,8 @@ const PATHS = {
   ),
   chevronRight: <path d="m9 6 6 6-6 6" />,
   chevronLeft: <path d="m15 6-6 6 6 6" />,
+  chevronUp: <path d="m6 15 6-6 6 6" />,
+  chevronDown: <path d="m6 9 6 6 6-6" />,
   // Marks a video where a still is shown in its place.
   play: <path d="M8 5.5v13l10.5-6.5L8 5.5Z" />,
   arrowLeft: <path d="M19 12H5m6-6-6 6 6 6" />,
@@ -103,6 +105,16 @@ const PATHS = {
   // Hearts are for photos only — the pandal gets a Morya, never a like.
   heart: (
     <path d="M12 20.3 4.9 13.4a4.4 4.4 0 0 1 0-6.3 4.5 4.5 0 0 1 6.3 0l.8.8.8-.8a4.5 4.5 0 0 1 6.3 0 4.4 4.4 0 0 1 0 6.3L12 20.3Z" />
+  ),
+  // A bowl of rice, for annadhanam. The mound is drawn as one lumpy line so
+  // it stays a "heap" at 12px; the two short arcs are what make it rice.
+  rice: (
+    <>
+      <path d="M3.5 12.5h17c0 4.4-2.6 7.8-6 8.8H9.5c-3.4-1-6-4.4-6-8.8Z" />
+      <path d="M9 21.3h6" />
+      <path d="M5.2 12.5c-.9-2.6.7-4.9 3-4.7.3-2.3 2.3-3.6 4.3-3.1 1.3-1.2 3.5-.8 4.1 1 2.3.4 3.4 2.6 2.7 4.7" />
+      <path d="M8.8 10.3c.4-.7 1.2-1 2-.7M13.6 9.1c.5-.7 1.4-.9 2.1-.5" />
+    </>
   ),
   // A modak — Bappa's sweet. Marks the "Morya" tap; a heart would say the
   // wrong thing. The pleats keep it from reading as a plain teardrop.

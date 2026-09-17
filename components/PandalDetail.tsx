@@ -13,6 +13,7 @@ import type { VisitNotice } from "./Home";
 import {
   type Pandal,
   annadhanamLabel,
+  todayIST,
   urgencyOf,
   URGENCY_COLOR,
   daysUntilVisarjan,
@@ -176,7 +177,29 @@ export default function PandalDetail({
 
         {/* The things that make this one *this* one. Only what's known; an
             empty row would be worse than none. */}
-        {(pandal.theme || pandal.establishedYear || pandal.ecoFriendly || pandal.annadhanamDate) && (
+        {/* Annadhanam gets its own block, not a chip: for a lot of people
+            it is the reason to go to *this* mandapam today. Turmeric, the
+            palette's "good news" colour, on paper so it sits under the
+            urgency banner rather than competing with it. */}
+        {pandal.annadhanamDate && (
+          <div className="mt-2.5 flex items-center gap-3 rounded-[12px] border border-turmeric/50 bg-turmeric/12 px-3.5 py-2.5">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-turmeric text-ink">
+              <Icon name="rice" size={20} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="numeric block text-[11px] uppercase tracking-[0.07em] text-ink">
+                Annadhanam {pandal.annadhanamDate === todayIST() ? "today" : ""}
+              </span>
+              <span className="block text-[12.5px] leading-snug text-ink-dim">Free prasadam meal at the mandapam, all welcome</span>
+            </span>
+            <span className="numeric flex shrink-0 items-center gap-1.5 text-[13px] text-ink">
+              <Icon name="calendar" size={13} className="opacity-70" />
+              {annadhanamLabel(pandal.annadhanamDate)}
+            </span>
+          </div>
+        )}
+
+        {(pandal.theme || pandal.establishedYear || pandal.ecoFriendly) && (
           <ul className="mt-3 flex flex-wrap gap-1.5 text-[12.5px] text-ink">
             {pandal.theme && (
               <li className="flex items-center gap-1.5 rounded-full border border-line bg-paper py-1 pr-2.5 pl-2">
@@ -188,12 +211,6 @@ export default function PandalDetail({
               <li className="flex items-center gap-1.5 rounded-full border border-line bg-paper py-1 pr-2.5 pl-2">
                 <Icon name="calendar" size={12} className="opacity-70" />
                 Since {pandal.establishedYear}
-              </li>
-            )}
-            {pandal.annadhanamDate && (
-              <li className="flex items-center gap-1.5 rounded-full border border-line bg-paper py-1 pr-2.5 pl-2">
-                <Icon name="modak" size={12} className="text-kumkum" />
-                Annadhanam {annadhanamLabel(pandal.annadhanamDate)}
               </li>
             )}
             {pandal.ecoFriendly && (

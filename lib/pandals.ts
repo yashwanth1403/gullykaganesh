@@ -159,6 +159,11 @@ export function visarjanDate(p: Pandal): string {
   });
 }
 
+/** Today's IST calendar day as "YYYY-MM-DD", the format annadhanamDate is stored in. */
+export function todayIST(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+}
+
 /** "Sat 20 Sept" for a stored "YYYY-MM-DD"; the date is an IST calendar day. */
 export function annadhanamLabel(date: string): string {
   return new Date(`${date}T00:00:00+05:30`).toLocaleDateString("en-IN", {

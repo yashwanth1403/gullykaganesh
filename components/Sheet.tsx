@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import Icon from "./Icon";
 
 type Props = {
   expanded: boolean;
@@ -85,6 +86,17 @@ export default function Sheet({ expanded, onExpandedChange, children }: Props) {
         className="grid w-full shrink-0 touch-none place-items-center py-3 md:hidden"
       >
         <span className="h-1 w-9 rounded-full bg-line" />
+      </button>
+      {/* The bar alone doesn't tell a first-timer it moves; the chevron
+          does. A sibling, not a child, because a button can't nest one. */}
+      <button
+        type="button"
+        onClick={() => onExpandedChange(!expanded)}
+        aria-expanded={expanded}
+        aria-label={expanded ? "Collapse list" : "Expand list"}
+        className="absolute top-1.5 right-3 grid h-8 w-8 place-items-center rounded-full border border-line bg-paper text-ink-dim shadow-[var(--shadow-elevated)] transition-[transform,color] duration-150 ease-out hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-turmeric active:scale-[0.94] md:hidden"
+      >
+        <Icon name={expanded ? "chevronDown" : "chevronUp"} size={16} strokeWidth={2.2} />
       </button>
 
       <div
