@@ -9,6 +9,7 @@ import {
   urgencyOf,
   URGENCY_COLOR,
   daysUntilVisarjan,
+  thumbUrl,
 } from "@/lib/pandals";
 
 type Props = {
@@ -80,7 +81,7 @@ export default function PandalList({
               >
                 {p.photos[0] ? (
                   <Image
-                    src={p.photos[0].url}
+                    src={thumbUrl(p.photos[0].url)}
                     alt=""
                     fill
                     sizes="48px"

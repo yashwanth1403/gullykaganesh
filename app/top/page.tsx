@@ -4,7 +4,7 @@ import Link from "next/link";
 import Icon, { type IconName } from "@/components/Icon";
 import ShareButton from "@/components/ShareButton";
 import SubpageHeader from "@/components/SubpageHeader";
-import type { Pandal } from "@/lib/pandals";
+import { thumbUrl, type Pandal } from "@/lib/pandals";
 import { getRecords, type Ranked } from "@/lib/records";
 
 export const metadata: Metadata = {
@@ -52,7 +52,7 @@ function Row({
           className="relative grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-[11px] bg-turmeric shadow-[inset_0_0_0_1px_rgba(36,18,8,0.08)]"
         >
           {cover ? (
-            <Image src={cover.url} alt="" fill sizes="44px" loading={rank === 1 ? "eager" : undefined} className="object-cover" />
+            <Image src={thumbUrl(cover.url)} alt="" fill sizes="44px" loading={rank === 1 ? "eager" : undefined} className="object-cover" />
           ) : (
             <span aria-hidden className="display text-[20px] leading-none text-paper">
               {pandal.name.charAt(0)}

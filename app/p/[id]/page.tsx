@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Icon from "@/components/Icon";
 import SubpageHeader from "@/components/SubpageHeader";
-import { visarjanDate } from "@/lib/pandals";
+import { thumbUrl, visarjanDate } from "@/lib/pandals";
 import { getLivePandal } from "@/lib/queries";
 import { SITE_NAME, SITE_URL, absoluteUrl, jsonLd } from "@/lib/site";
 
@@ -203,7 +203,7 @@ export default async function PandalPage({ params }: PageProps<"/p/[id]">) {
           <ul className="mt-5 grid grid-cols-3 gap-1.5">
             {p.photos.slice(1, 7).map((ph) => (
               <li key={ph.id} className="relative aspect-square overflow-hidden rounded-[11px] bg-paper-warm">
-                <Image src={ph.url} alt={`${p.name} — photo`} fill sizes="140px" className="object-cover" />
+                <Image src={thumbUrl(ph.url)} alt={`${p.name} — photo`} fill sizes="140px" className="object-cover" />
               </li>
             ))}
           </ul>

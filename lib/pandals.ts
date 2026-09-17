@@ -7,6 +7,8 @@
  * to the browser.
  */
 
+import { thumbKey } from "./r2";
+
 /** Immersion day within the festival, 1 (Chaturthi) through 16. */
 export type VisarjanDay = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16;
 export const VISARJAN_DAYS: VisarjanDay[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
@@ -134,20 +136,12 @@ export function boundsOf(list: Pandal[]): [number, number, number, number] | nul
 }
 
 /**
- * Next's optimiser only serves widths from its configured `imageSizes` /
- * `deviceSizes`; anything else is a 400. Snapping here means a caller can ask
- * for any size and still get a valid URL.
+ * The small variant of a photo, for map pins and thumbnails. It is a real
+ * object in R2 (`thumbKey`), cut when the photo was uploaded, so a 40px pin
+ * never downloads the full-size copy and nothing is resized on the fly.
  */
-const NEXT_IMAGE_SIZES = [32, 48, 64, 96, 128, 256, 384];
-
-/**
- * A small, optimised variant of a photo, for map pins and thumbnails.
- * Routed through Next's image optimiser so a 40px pin does not download the
- * full-size upload — the same call works once these become R2 URLs.
- */
-export function thumbUrl(src: string, w = 96): string {
-  const size = NEXT_IMAGE_SIZES.find((s) => s >= w) ?? 384;
-  return `/_next/image?url=${encodeURIComponent(src)}&w=${size}&q=70`;
+export function thumbUrl(src: string): string {
+  return thumbKey(src);
 }
 
 /** The calendar date this idol goes into the water. */

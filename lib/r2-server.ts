@@ -7,6 +7,7 @@ import {
   VIDEO_CONTENT_TYPES,
   type VideoContentType,
 } from "./validation";
+import { thumbKey } from "./r2";
 
 function env(name: string): string {
   const v = process.env[name];
@@ -70,7 +71,8 @@ export async function verifyUpload(key: string, kind: "photo" | "video"): Promis
 
 /**
  * Every key must sit under this user's prefix and actually have been
- * uploaded as what it claims to be — a video's poster included. Returns the
+ * uploaded as what it claims to be — a video's poster and every JPEG's
+ * thumb included, since pins and lists show nothing else. Returns the
  * message to show, or null when everything checks out.
  */
 export async function verifyOwnUploads(
@@ -81,6 +83,9 @@ export async function verifyOwnUploads(
   for (const m of media) {
     const keys: [string, "photo" | "video"][] = [[m.key, m.kind]];
     if (m.kind === "video" && m.posterKey) keys.push([m.posterKey, "photo"]);
+    for (const [key, kind] of [...keys]) {
+      if (kind === "photo") keys.push([thumbKey(key), "photo"]);
+    }
     for (const [key, kind] of keys) {
       if (!key.startsWith(prefix)) return "Bad photo reference";
       if (!(await verifyUpload(key, kind))) return "A photo didn't finish uploading. Try again.";
@@ -90,14 +95,18 @@ export async function verifyOwnUploads(
 }
 
 /**
- * Purges a photo the moment its row goes `removed`. Best-effort: the row is
- * already gone from every query, so a failed delete only costs storage. The
- * caller logs and moves on rather than failing the user's edit.
+ * Purges a photo (and, for a JPEG, its thumb) the moment its row goes
+ * `removed`. Best-effort: the row is already gone from every query, so a
+ * failed delete only costs storage. The caller logs and moves on rather
+ * than failing the user's edit.
  */
 export async function deletePhotoObject(key: string): Promise<void> {
-  try {
-    await r2().send(new DeleteObjectCommand({ Bucket: env("R2_BUCKET"), Key: key }));
-  } catch (err) {
-    console.error("[r2] delete failed for", key, err);
+  const keys = key.endsWith(".jpg") ? [key, thumbKey(key)] : [key];
+  for (const k of keys) {
+    try {
+      await r2().send(new DeleteObjectCommand({ Bucket: env("R2_BUCKET"), Key: k }));
+    } catch (err) {
+      console.error("[r2] delete failed for", k, err);
+    }
   }
 }

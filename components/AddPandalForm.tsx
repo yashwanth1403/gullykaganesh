@@ -7,7 +7,7 @@ import LocationPicker from "./LocationPicker";
 import { createPandal, requestUploadUrls } from "@/app/add/actions";
 import { updatePandal } from "@/app/p/[id]/actions";
 import { VISARJAN_DAYS, visarjanDate, type PandalPhoto, type VisarjanDay } from "@/lib/pandals";
-import { resizeImage, type ResizedPhoto } from "@/lib/resize-image";
+import { resizeImage, thumbOf, type ResizedPhoto } from "@/lib/resize-image";
 import { prepareVideo, VideoRejected, type PreparedVideo } from "@/lib/prepare-video";
 import type { Place } from "@/lib/geocode";
 import { MAX_PHOTOS, MAX_VIDEOS, MAX_VIDEO_SECONDS, PHOTO_CONTENT_TYPE } from "@/lib/validation";
@@ -300,11 +300,13 @@ export default function AddPandalForm({ initial }: { initial?: EditInitial }) {
       if (photos.length > 0) {
         setStage({ kind: "busy", label: "Uploading photos…", step: 1 });
         // One slot per object: a photo is one, a video is two (file + poster).
+        // Every JPEG slot also carries the URL for its thumb.
         const types = photos.flatMap((p) =>
           p.kind === "video" ? [p.contentType, PHOTO_CONTENT_TYPE] : [PHOTO_CONTENT_TYPE],
         );
         const slots = await requestUploadUrls(types);
-        const put = async (url: string, type: string, body: Blob) => {
+        const put = async (url: string | undefined, type: string, body: Blob) => {
+          if (!url) throw new UploadFailed("Storage didn't hand out an upload slot. Try again.");
           const res = await fetch(url, { method: "PUT", headers: { "Content-Type": type }, body }).catch(() => {
             throw new UploadFailed(`${type.startsWith("video/") ? "The video" : "A photo"} couldn't be sent. Check your signal and try again.`);
           });
@@ -320,10 +322,14 @@ export default function AddPandalForm({ initial }: { initial?: EditInitial }) {
             const slot = slots[n++];
             if (p.kind === "video") {
               const posterSlot = slots[n++];
-              await Promise.all([put(slot.url, p.contentType, p.blob), put(posterSlot.url, PHOTO_CONTENT_TYPE, p.poster)]);
+              await Promise.all([
+                put(slot.url, p.contentType, p.blob),
+                put(posterSlot.url, PHOTO_CONTENT_TYPE, p.poster),
+                thumbOf(p.poster).then((t) => put(posterSlot.thumb?.url, PHOTO_CONTENT_TYPE, t)),
+              ]);
               return { key: slot.key, width: p.width, height: p.height, kind: "video" as const, posterKey: posterSlot.key, durationS: p.durationS };
             }
-            await put(slot.url, PHOTO_CONTENT_TYPE, p.blob);
+            await Promise.all([put(slot.url, PHOTO_CONTENT_TYPE, p.blob), put(slot.thumb?.url, PHOTO_CONTENT_TYPE, p.thumb)]);
             return { key: slot.key, width: p.width, height: p.height, kind: "photo" as const };
           }),
         );

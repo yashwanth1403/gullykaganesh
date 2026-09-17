@@ -5,10 +5,12 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { pandals, photos } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import { thumbKey } from "@/lib/r2";
 import { presignUpload, verifyOwnUploads, type UploadContentType } from "@/lib/r2-server";
 import { MAX_PHOTOS, PHOTO_CONTENT_TYPE, VIDEO_CONTENT_TYPES, pandalInput } from "@/lib/validation";
 
-export type UploadSlot = { key: string; url: string };
+/** A JPEG slot also carries the PUT for its 320px thumb. */
+export type UploadSlot = { key: string; url: string; thumb?: { key: string; url: string } };
 
 const EXT: Record<UploadContentType, string> = {
   "image/jpeg": "jpg",
@@ -20,6 +22,7 @@ const EXT: Record<UploadContentType, string> = {
 /**
  * One presigned PUT per object the user is about to send — a photo, a video,
  * or a video's poster frame — each signed for exactly the type it will be.
+ * Every JPEG gets a second URL for the thumb the client cuts beside it.
  * Keys are namespaced by user so nothing a client sends can name someone
  * else's object.
  */
@@ -34,7 +37,12 @@ export async function requestUploadUrls(types: string[]): Promise<UploadSlot[]> 
         ? (t as UploadContentType)
         : PHOTO_CONTENT_TYPE;
       const key = `pandals/${user.id}/${randomUUID()}.${EXT[type]}`;
-      return { key, url: await presignUpload(key, type) };
+      const slot: UploadSlot = { key, url: await presignUpload(key, type) };
+      if (type === PHOTO_CONTENT_TYPE) {
+        const tk = thumbKey(key);
+        slot.thumb = { key: tk, url: await presignUpload(tk, type) };
+      }
+      return slot;
     }),
   );
 }

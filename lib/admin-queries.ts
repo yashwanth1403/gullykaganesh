@@ -4,7 +4,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/db";
 import { pandals, photos, profiles, reports } from "@/db/schema";
 import { REPORT_REASONS } from "./report-reasons";
-import { photoUrl } from "./r2";
+import { photoUrl, thumbKey } from "./r2";
 
 export type ContentStatus = "live" | "hidden" | "removed";
 
@@ -62,7 +62,7 @@ async function loadPandals(ids: string[]) {
     .where(and(inArray(photos.pandalId, ids), eq(photos.status, "live")))
     .orderBy(asc(photos.createdAt));
   const cover = new Map<string, string>();
-  for (const c of covers) if (!cover.has(c.pandalId)) cover.set(c.pandalId, photoUrl(c.posterKey ?? c.r2Key));
+  for (const c of covers) if (!cover.has(c.pandalId)) cover.set(c.pandalId, photoUrl(thumbKey(c.posterKey ?? c.r2Key)));
 
   return rows.map((r) => ({ ...r, thumb: cover.get(r.id) ?? null }));
 }
@@ -159,7 +159,7 @@ export async function getModerationQueue(): Promise<{ open: ReportTarget[]; hidd
         kind, id, pandalId: pd.id,
         title: `Photo on ${pd.name}`,
         subtitle: `${pd.gully}, ${pd.area}`,
-        thumb: photoUrl(ph.posterKey ?? ph.r2Key),
+        thumb: photoUrl(thumbKey(ph.posterKey ?? ph.r2Key)),
         status: ph.status,
         addedBy: pd.addedBy,
         claimedBy: pd.claimedBy,

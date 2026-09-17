@@ -107,7 +107,7 @@ function buildPin(
 
   if (photo) {
     const img = document.createElement("img");
-    img.src = thumbUrl(photo, landmark ? 128 : 96);
+    img.src = thumbUrl(photo);
     img.alt = "";
     img.decoding = "async";
     img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
@@ -160,7 +160,7 @@ function buildCluster(count: number, urgent: number, photo: string | null) {
 
   if (photo) {
     const img = document.createElement("img");
-    img.src = thumbUrl(photo, 160);
+    img.src = thumbUrl(photo);
     img.alt = "";
     img.decoding = "async";
     img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
